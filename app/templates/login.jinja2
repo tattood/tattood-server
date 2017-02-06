@@ -1,0 +1,23 @@
+<!-- extend from base layout -->
+{# {% extends "base.html" %} #}
+
+{% block content %}
+  <h1>Sign In</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li>{{ message[1] }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+  <form action="" method="post">
+    {{ form.email.label }}: {{ form.email(placeholder='yourname@email.com') }}
+    <br>
+    {{ form.password.label }}: {{ form.password(placeholder='******') }}
+    <br>
+    {{ form.csrf_token }}
+    <p><input type=submit value=Register>
+</form>
+{% endblock %}

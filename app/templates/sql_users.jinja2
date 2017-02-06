@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <title>Welcome to microblog</title>
+  </head>
+  <body>
+    {% for user in users %}
+      <div><p>  {{ user.username }} {{ user.mail }}</p></div>
+    {% endfor %}
+
+    <form action="" method="post">
+      <dl>
+	<dt>Username</dt><dd><input type=text name=username></dd>
+	<dt>E-Mail</dt><dd><input type=email name=email></dd>
+	<dd><input type=submit value=Login></dd>
+      </dl>
+    </form>
+  </body>
+</html>
