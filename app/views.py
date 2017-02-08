@@ -24,6 +24,8 @@ def user():
         username = request.args.get('username')
         # email = request.args.get('email')
         user = db.User.query.filter_by(username=username).first()
+        if user is None:
+            return jsonify()
         return jsonify(username=user.username, email=user.email)
     elif request.method == 'POST':
         new_user = db.User(request.form['username'], request.form['email'])
