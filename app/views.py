@@ -1,7 +1,8 @@
 # import flask
 from app import app
 from app import db
-from flask import render_template, redirect, url_for, request, jsonify
+from flask import render_template, redirect, url_for, request, jsonify, abort
+import json
 
 
 @app.route('/')
@@ -20,15 +21,21 @@ def users():
 
 @app.route('/user', methods=['GET', 'POST'])
 def user():
+    user = None
     if request.method == 'GET':
-        username = request.args.get('username')
-        # email = request.args.get('email')
-        user = db.User.query.filter_by(username=username).first()
-        if user is None:
-            return jsonify()
-        return jsonify(username=user.username, email=user.email)
+        # username = request.args.get('username')
+        email = request.args.get('email')
+        user = db.User.query.filter_by(email=email).first()
     elif request.method == 'POST':
-        new_user = db.User(request.form['username'], request.form['email'])
-        db.db.session.add(new_user)
+        data = json.loads(request.get_data(as_text=True))
+        username = data['username']
+        email = data['email']
+        if not username or not email:
+            abort(404)
+        user = db.User(username, email)
+        db.db.session.add(user)
         db.db.session.commit()
-    return redirect(url_for('index'))
+    if user is not None:
+        return jsonify(username=user.username, email=user.email)
+    else:
+        abort(404)
