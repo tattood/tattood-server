@@ -33,8 +33,11 @@ def user():
         if not username or not email:
             abort(404)
         user = db.User(username, email)
-        db.db.session.add(user)
-        db.db.session.commit()
+        try:
+            db.db.session.add(user)
+            db.db.session.commit()
+        except Exception as e:
+            abort(400)
     if user is not None:
         return jsonify(username=user.username, email=user.email)
     else:

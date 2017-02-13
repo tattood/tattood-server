@@ -26,19 +26,19 @@ create table `user` (
 );
 
 create table likes(
-       `user_id` int,
+       user_id int,
        tattoo_id int,
-       primary_key(`user_id`, tattoo_id),
-       foreign key (`user_id`) references `user`(id) on delete cascade,
-       foreign key (`tattoo_id`) references `tattoo`(id) on delete cascade,
+       primary key(user_id, tattoo_id),
+       foreign key (user_id) references `user`(id) on delete cascade,
+       foreign key (tattoo_id) references tattoo(id) on delete cascade
 );
 
 create table follows(
        follower_id int,
        followed_id int,
-       primary_key(follower_id, followed_id),
-       foreign key (`follower_id`) references `user`(follower_id) on delete cascade,
-       foreign key (`followed_id`) references `user`(followed_id) on delete cascade,
+       primary key(follower_id, followed_id),
+       foreign key (`follower_id`) references `user`(id) on delete cascade,
+       foreign key (`followed_id`) references `user`(id) on delete cascade
 );
 #+END_SRC
 ** TODO List
@@ -54,13 +54,14 @@ create table tattoo(
        id int primary key auto_increment,
        owner_id int not null,
        private boolean not null default true,
-       tags varchar(100)
-       foreign key (owner_id) references `user`(owner_id),
+       tags varchar(100),
+       path tinytext,
+       foreign key (owner_id) references `user`(id)
 );
 
 create table tag(
        id int primary key auto_increment,
-       `desc` varchar(20) not null,
+       `desc` varchar(20) not null
 );
 #+END_SRC
 ** TODO List
