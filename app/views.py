@@ -35,7 +35,9 @@ def login():
     token = request.args.get('token')
     data = parse_token(token)
     verify(data, email)
-    user = db.User.query.filter(email=data['email']).first()
+    user = db.User.query.filter_by(email=data['email']).first()
+    if user is None:
+        abort(400)
     return user.jsonify()
 
 
