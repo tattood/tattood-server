@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from flask import jsonify
 from app import app
 
 db = SQLAlchemy(app)
@@ -15,3 +16,6 @@ class User(db.Model):
 
     def __repr__(self):
         return "<User {} {}>".format(self.username, self.email)
+
+    def jsonify(self):
+        return jsonify(username=self.username, email=self.email)
