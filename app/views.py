@@ -31,8 +31,9 @@ def verify(data, email):
 
 @app.route('/login', methods=['POST'])
 def login():
-    email = request.args.get('email')
-    token = request.args.get('token')
+    data = json.loads(request.get_data(as_text=True))
+    email = data['email']
+    token = data['token']
     data = parse_token(token)
     verify(data, email)
     user = db.User.query.filter_by(email=data['email']).first()
