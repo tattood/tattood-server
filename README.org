@@ -48,6 +48,8 @@ create table follows(
    + un/like
 * Tattoo
 + ID, path, submitter, tags, visibility
++ ?? Convert tags into a relation instead of a pipe separated list
+contains(tattoo_id, tag_id);
 ** Tables
 #+BEGIN_SRC sql :engine mysql
 create table tattoo(

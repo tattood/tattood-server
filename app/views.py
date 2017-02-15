@@ -1,7 +1,7 @@
 # import flask
 from app import app
 from app import db
-from flask import render_template, redirect, url_for, request, jsonify, abort
+from flask import render_template, redirect, url_for, request, session, abort
 import json
 import urllib.request
 
@@ -39,6 +39,7 @@ def login():
     user = db.User.query.filter_by(email=data['email']).first()
     if user is None:
         abort(400)
+    session[token] = user.username
     return user.jsonify()
 
 
@@ -56,4 +57,37 @@ def user():
         db.db.session.commit()
     except Exception as e:
         abort(400)
-    return user.jsonify()
+    return redirect(url_for('login'), code=307)
+
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return 200
+
+
+# User:
+# [GET]
+# get liked
+# get followed users
+# get following users
+# get uploaded public tattoo
+# get uploaded private tattoo
+# get liked tattoo
+# [POST]
+# un/like tattoo
+# un/follow user ??
+# Tattoo
+# [GET]
+# Get
+# [POST]
+# Set public/private
+# Upload
+# Delete
+
+
+@app.route('/tattoo')
+def tattoo():
+    token = request.args.get('token')
+    tid = request.args.get('id')
+    pass
