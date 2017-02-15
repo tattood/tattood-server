@@ -14,8 +14,8 @@ def index():
 
 @app.route('/users/')
 def users():
-    users = db.User.query.all()
-    return render_template('sql_users.jinja2', users=users)
+    # users = db.User.query.all()
+    return render_template('sql_users.jinja2', users=[])
 
 
 def parse_token(token):
@@ -63,8 +63,8 @@ def user():
 @app.route('/logout', methods=['POST'])
 def logout():
     data = json.loads(request.get_data(as_text=True))
-    username = data['username']
     token = data['token']
+    username = session[token]
     if session[token] != username:
         abort(404)
     session.pop(token, None)
@@ -191,11 +191,10 @@ def tattoo_update():
 def tattoo_upload():
     data = json.loads(request.get_data(as_text=True))
     token = data['token']
-    username = data['user_id']
+    username = session[token]
     private = data['private']
     image = request.files['file']
-    user_id = session[token]
-    if username != user_id or private is None or image is None or image.filename == '':
+    if private is None or image is None or image.filename == '':
         abort(401)
     tattoo = db.Tattoo(user_id, private, image)
     db.db.session.add(tattoo)
