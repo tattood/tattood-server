@@ -30,17 +30,19 @@ class Tattoo(db.Model):
     tags = db.Column(db.VARCHAR)
     path = db.Column(TINYTEXT)
 
-    def __init__(self, owner_id, private, tags, path):
+    def __init__(self, owner_id, private, data):
         self.owner_id = owner_id
         self.private = private
-        self.tags = tags
-        self.path = path
+        # [TODO] Should call tag extraction
+        self.tags = ""
+        # [TODO] Save data and put path
+        self.path = ""
 
     def __repr__(self):
         return "<Tatoo {} {}>".format(self.owner_id, self.id)
 
     def jsonify(self):
-        return jsonify(owner_id=self.owner_id, id=self.id)
+        return jsonify(owner_id=self.owner_id, id=self.id, private=self.private)
 
 
 class Follows(db.Model):
@@ -85,11 +87,3 @@ class Tag(db.Model):
 
     def jsonify(self):
         return jsonify(desc=self.desc)
-
-
-print(Likes.query.all())
-print(Follows.query.all())
-print(Tag.query.all())
-print(Tattoo.query.all())
-# print(db.User.query.all())
-# print(db.Tattoo.query.all())
