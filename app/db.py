@@ -1,3 +1,4 @@
+import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
 from app import app
@@ -29,6 +30,7 @@ class Tattoo(db.Model):
     private = db.Column(db.Integer)
     tags = db.Column(db.VARCHAR)
     path = db.Column(TINYTEXT)
+    uploaded = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
     def __init__(self, owner_id, private, data):
         self.owner_id = owner_id

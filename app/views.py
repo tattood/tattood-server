@@ -2,6 +2,7 @@
 from app import app
 from app import db
 from flask import render_template, redirect, url_for, request, session, abort, jsonify, send_file
+from sqlalchemy import func, desc
 import json
 import urllib.request
 
@@ -68,7 +69,28 @@ def logout():
     if session[token] != username:
         abort(404)
     session.pop(token, None)
-    return 200
+    return jsonify('')
+
+
+@app.route('/popular')
+def popular():
+    data = map(lambda x: x.tattoo_id,
+               db.db.session.query(db.Likes.tattoo_id, func.count(1))
+               .group_by(db.Likes.tattoo_id).order_by(desc(func.count(1))).limit(20).all())
+    data = {i: [tid, db.Tattoo.query.filter_by(id=tid).first().owner_id]
+            for i, tid in enumerate(data)}
+    return jsonify(data=data)
+
+
+@app.route('/recent')
+def recent():
+    data = {i: [x.id, x.owner_id]
+            for i, x in
+            enumerate(db.Tattoo.query.order_by(desc(db.Tattoo.uploaded)).limit(20).all())}
+    # data = list(map(lambda x: x.id, db.Tattoo.query.order_by(desc(db.Tattoo.uploaded))
+    #                 .limit(20).all()))
+    # data = {i: [tid, db.Tattoo.query.filter_by(id=tid).first().owner_id] for i, tid in enumerate(data)}
+    return jsonify(data=data)
 
 
 @app.route('/user-likes')
@@ -166,9 +188,9 @@ def tattoo():
     tid = request.args.get('id')
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
     token = request.args.get('token')
-    user_id = session[token]
-    if tattoo.owner_id != user_id:
-        abort(401)
+    # user_id = session[token]
+    # if tattoo.owner_id != user_id:
+    #     abort(401)
     return send_file(tattoo.path, mimetype='image/png')
 
 
@@ -196,7 +218,8 @@ def tattoo_upload():
     image = request.files['file']
     if private is None or image is None or image.filename == '':
         abort(401)
-    tattoo = db.Tattoo(user_id, private, image)
+    user = db.User.query.filter_by(username=username).first()
+    tattoo = db.Tattoo(user.id, private, image)
     db.db.session.add(tattoo)
     db.db.session.commit()
     return tattoo.jsonify()
