@@ -2,7 +2,7 @@ import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
 from app import app
-from sqlalchemy.dialects.mysql import TINYTEXT
+from sqlalchemy.dialects.mysql import TINYTEXT, TEXT
 
 
 db = SQLAlchemy(app)
@@ -25,20 +25,20 @@ class User(db.Model):
 
 
 class Tattoo(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     owner_id = db.Column(db.Integer, primary_key=True)
     private = db.Column(db.Integer)
     tags = db.Column(db.VARCHAR)
     path = db.Column(TINYTEXT)
-    uploaded = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    uploaded = db.Column(db.DateTime, default=db.func.current_timestamp())
 
-    def __init__(self, owner_id, private, data):
+    def __init__(self, owner_id, private, data, path):
         self.owner_id = owner_id
         self.private = private
         # [TODO] Should call tag extraction
         self.tags = ""
         # [TODO] Save data and put path
-        self.path = ""
+        self.path = path
 
     def __repr__(self):
         return "<Tatoo {} {}>".format(self.owner_id, self.id)
@@ -89,3 +89,15 @@ class Tag(db.Model):
 
     def jsonify(self):
         return jsonify(desc=self.desc)
+
+
+class Login(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(TEXT)
+
+    def __init__(self, _id, token):
+        self.id = _id
+        self.token = token
+
+    def jsonify(self):
+        return jsonify(id=self.id, token=self.token)

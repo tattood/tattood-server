@@ -12,7 +12,7 @@
       </ul>
     {% endif %}
   {% endwith %}
-  <form action="" method="post">
+  <form action="" method="get">
     {{ form.email.label }}: {{ form.email(placeholder='yourname@email.com') }}
     <br>
     {{ form.password.label }}: {{ form.password(placeholder='******') }}
