@@ -36,7 +36,7 @@ class Tattoo(db.Model):
         self.owner_id = owner_id
         self.private = private
         # [TODO] Should call tag extraction
-        self.tags = ""
+        self.tags = []
         # [TODO] Save data and put path
         self.path = path
 
@@ -44,7 +44,13 @@ class Tattoo(db.Model):
         return "<Tatoo {} {}>".format(self.owner_id, self.id)
 
     def jsonify(self):
-        return jsonify(owner_id=self.owner_id, id=self.id, private=self.private)
+        owner = User.query.filter_by(id=self.owner_id).first()
+        return jsonify(owner_id=self.owner_id, owner=owner.username,
+                       id=self.id, private=self.private, tags=[self.tags])
+
+    def jsonify_other(self):
+        owner = User.query.filter_by(id=self.owner_id).first()
+        return jsonify(owner=owner.username, id=self.id, tags=[self.tags])
 
 
 class Follows(db.Model):

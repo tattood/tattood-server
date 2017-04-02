@@ -106,12 +106,12 @@ def recent():
 
 @app.route('/user-likes')
 def liked():
-    # user_id = 12
     token = request.args.get('token')
-    login = db.Login.query.filter_by(token=token).first()
-    if login is None:
-        abort(404)
-    user_id = login.id
+    user_id = 12
+    # login = db.Login.query.filter_by(token=token).first()
+    # if login is None:
+    #     abort(404)
+    # user_id = login.id
     data = map(lambda x: x.tattoo_id,
                db.db.session.query(db.Likes.tattoo_id, func.count(1))
                .filter_by(user_id=user_id)
@@ -125,23 +125,23 @@ def liked():
 @app.route('/user-tattoo')
 def user_tattoo():
     private = request.args.get('private') or '0'
-    # user_id = 12
     token = request.args.get('token')
-    print("HERE-TOKEN")
-    print(token)
-    login = db.Login.query.filter_by(token=token).first()
-    print(login)
-    if login is None:
-        abort(404)
-    user_id = login.id
+    # print("HERE-TOKEN")
+    # print(token)
+    user_id = 12
+    # login = db.Login.query.filter_by(token=token).first()
+    # print(login)
+    # if login is None:
+    #     abort(404)
+    # user_id = login.id
     data = map(lambda x: x.id,
                db.db.session.query(db.Tattoo.id, db.Tattoo.owner_id, func.count(1))
                .filter_by(owner_id=user_id, private=private)
                .group_by(db.Tattoo.id).order_by(desc(func.count(1))).limit(20).all())
     data = {i: [tid, db.Tattoo.query.filter_by(id=tid).first().owner_id]
             for i, tid in enumerate(data)}
-    print("HERE")
-    print(data)
+    # print("HERE")
+    # print(data)
     return jsonify(data=data)
 
 
@@ -226,6 +226,14 @@ def tattoo():
     # if tattoo.private and tattoo.user_id != user_id:
     #     abort(404)
     return send_file('../data/'+tattoo.path, mimetype='image/png')
+
+
+@app.route('/tattoo-data')
+def tattoo_data():
+    tid = request.args.get('id')
+    tattoo = db.Tattoo.query.filter_by(id=tid).first()
+    print(tattoo.jsonify_other().data)
+    return tattoo.jsonify_other()
 
 
 @app.route('/tattoo-update', methods=['POST'])
