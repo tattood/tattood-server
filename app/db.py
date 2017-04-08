@@ -28,17 +28,11 @@ class Tattoo(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     owner_id = db.Column(db.Integer, primary_key=True)
     private = db.Column(db.Integer)
-    tags = db.Column(db.VARCHAR)
-    path = db.Column(TINYTEXT)
     uploaded = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     def __init__(self, owner_id, private, data):
         self.owner_id = owner_id
         self.private = private
-        # [TODO] Should call tag extraction
-        self.tags = ''
-        # [TODO] Save data and put path
-        self.path = ''
 
     def __repr__(self):
         return "<Tatoo {} {}>".format(self.owner_id, self.id)

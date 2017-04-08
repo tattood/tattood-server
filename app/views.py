@@ -239,8 +239,7 @@ def tattoo():
     # user_id = login.id
     # if tattoo.private and tattoo.user_id != user_id:
     #     abort(404)
-    print(tattoo.path)
-    return send_file('../data/'+tattoo.path)
+    return send_file('../data/'+tattoo.id)
 
 
 @app.route('/tattoo-data')
@@ -306,10 +305,8 @@ def tattoo_upload():
     image = base64.b64decode(str.encode(image))
     print(image)
     db.db.session.add(tattoo)
-    db.db.session.flush()
-    tattoo.path = tattoo.id
     db.db.session.commit()
-    with open('data/'+tattoo.path, 'wb') as f:
+    with open('data/'+tattoo.id, 'wb') as f:
         f.write(image)
     return tattoo.jsonify()
 
