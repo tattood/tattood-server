@@ -38,12 +38,13 @@ class Tattoo(db.Model):
         return "<Tatoo {} {}>".format(self.owner_id, self.id)
 
     def get_tags(self):
-        return map(lambda x: Tag.query.filter_by(id=x).first().desc,
-            map(lambda x: x.tag_id,
-                db.HasTag.query(tattoo_id=id).all()))
+        return list(map(lambda x: Tag.query.filter_by(id=x).first().desc,
+                        map(lambda x: x.tag_id,
+                            HasTag.query.filter_by(tattoo_id=self.id).all())))
 
     def jsonify(self):
         owner = User.query.filter_by(id=self.owner_id).first()
+        print(self.get_tags())
         return jsonify(owner_id=self.owner_id, owner=owner.username,
                        id=self.id, private=self.private, tags=self.get_tags())
 

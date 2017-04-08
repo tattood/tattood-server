@@ -20,13 +20,14 @@ def users():
 
 
 def parse_token(token):
-    # print(token)
+    print(token)
     auth = 'https://www.googleapis.com/oauth2/v3/tokeninfo?id_token='
     data = urllib.request.urlopen(auth+token).read().decode('utf-8')
     return json.loads(data)
 
 
-def verify(data, email):
+def verify(token, email):
+    data = parse_token(token)
     if not data['email_verified'] or email != data['email']:
         abort(404)
 
@@ -36,20 +37,17 @@ def login():
     data = json.loads(request.get_data(as_text=True))
     email = data['email']
     token = data['token']
-    data = parse_token(token)
-    # [BUG] Do not forget to uncomment below line after fixing Client bug
-    # verify(data, email)
     user = db.User.query.filter_by(email=email).first()
     if user is None:
         abort(464)
     login = db.Login.query.filter_by(id=user.id).first()
-    # print(login)
     if login is None:
+        verify(token, email)
         db.db.session.add(db.Login(user.id, token))
-        db.db.session.commit()
-    else:
+    elif login.token != token:
+        verify(token, email)
         login.token = token
-        db.db.session.commit()
+    db.db.session.commit()
     return user.jsonify()
 
 
@@ -239,7 +237,7 @@ def tattoo():
     # user_id = login.id
     # if tattoo.private and tattoo.user_id != user_id:
     #     abort(404)
-    return send_file('../data/'+tattoo.id)
+    return send_file('../data/'+str(tattoo.id))
 
 
 @app.route('/tattoo-data')
@@ -248,9 +246,7 @@ def tattoo_data():
     token = request.args.get('token')
     user = db.Login.query.filter_by(token=token).first()
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
-    print(token)
-    # print(user.id)
-    # print(tattoo.owner_id)
+    # print(token)
     if user is not None and user.id == tattoo.owner_id:
         return tattoo.jsonify()
     return tattoo.jsonify_other()
@@ -278,12 +274,13 @@ def tattoo_update():
     with db.db.session.no_autoflush:
         for tag in tags:
             t = db.Tag.query.filter_by(desc=tag).first()
+            print(tag)
             if t is None:
                 t = db.Tag(tag)
                 db.db.session.add(t)
                 db.db.session.commit()
             ht = db.HasTag(tattoo.id, t.id, tattoo.owner_id)
-        db.db.session.add(ht)
+            db.db.session.add(ht)
         db.db.session.commit()
     return jsonify()
 
