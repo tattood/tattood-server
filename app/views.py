@@ -20,6 +20,7 @@ def users():
 
 
 def parse_token(token):
+    # print(token)
     auth = 'https://www.googleapis.com/oauth2/v3/tokeninfo?id_token='
     data = urllib.request.urlopen(auth+token).read().decode('utf-8')
     return json.loads(data)
@@ -36,14 +37,18 @@ def login():
     email = data['email']
     token = data['token']
     data = parse_token(token)
-    verify(data, email)
+    # [BUG] Do not forget to uncomment below line after fixing Client bug
+    # verify(data, email)
     user = db.User.query.filter_by(email=email).first()
     if user is None:
-        abort(400)
+        abort(464)
     login = db.Login.query.filter_by(id=user.id).first()
     # print(login)
     if login is None:
         db.db.session.add(db.Login(user.id, token))
+        db.db.session.commit()
+    else:
+        login.token = token
         db.db.session.commit()
     return user.jsonify()
 
@@ -83,7 +88,7 @@ def logout():
 
 @app.route('/popular')
 def popular():
-    limit = int(request.args.get('limit'))
+    limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     data = map(lambda x: x.tattoo_id,
                db.db.session.query(db.Likes.tattoo_id, func.count(1))
                .group_by(db.Likes.tattoo_id).order_by(desc(func.count(1))).limit(limit).all())
@@ -94,7 +99,7 @@ def popular():
 
 @app.route('/recent')
 def recent():
-    limit = int(request.args.get('limit'))
+    limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     data = {i: [x.id, x.owner_id]
             for i, x in
             enumerate(db.Tattoo.query.order_by(desc(db.Tattoo.uploaded)).limit(limit).all())}
@@ -107,17 +112,22 @@ def recent():
 @app.route('/user-likes')
 def liked():
     token = request.args.get('token')
-    user_id = 12
-    # login = db.Login.query.filter_by(token=token).first()
-    # if login is None:
-    #     abort(404)
-    # user_id = login.id
-    data = map(lambda x: x.tattoo_id,
-               db.db.session.query(db.Likes.tattoo_id, func.count(1))
-               .filter_by(user_id=user_id)
-               .group_by(db.Likes.tattoo_id).order_by(desc(func.count(1))).limit(20).all())
-    data = {i: [tid, db.Tattoo.query.filter_by(id=tid).first().owner_id]
-            for i, tid in enumerate(data)}
+    user_name = request.args.get('user')
+    limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
+    login = db.Login.query.filter_by(token=token).first()
+    if login is None:
+        abort(404)
+    print(user_name)
+    if user_name == 'null':
+        user_id = login.id
+    else:
+        user_id = db.User.query.filter_by(username=user_name).first().id
+    # print(user_id)
+    data = db.Likes.query.filter_by(user_id=user_id).limit(limit).all()
+    # print(data)
+    data = {i: [l.tattoo_id, db.Tattoo.query.filter_by(id=l.tattoo_id).first().owner_id]
+            for i, l in enumerate(data)}
+    # print(data)
     return jsonify(data=data)
 
 
@@ -126,22 +136,26 @@ def liked():
 def user_tattoo():
     private = request.args.get('private') or '0'
     token = request.args.get('token')
+    user_name = request.args.get('user')
+    limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     # print("HERE-TOKEN")
     # print(token)
-    user_id = 12
-    # login = db.Login.query.filter_by(token=token).first()
-    # print(login)
-    # if login is None:
-    #     abort(404)
-    # user_id = login.id
-    data = map(lambda x: x.id,
-               db.db.session.query(db.Tattoo.id, db.Tattoo.owner_id, func.count(1))
-               .filter_by(owner_id=user_id, private=private)
-               .group_by(db.Tattoo.id).order_by(desc(func.count(1))).limit(20).all())
-    data = {i: [tid, db.Tattoo.query.filter_by(id=tid).first().owner_id]
+    # user_id = 12
+    print(user_name)
+    login = db.Login.query.filter_by(token=token).first()
+    if login is None:
+        abort(404)
+    print(login)
+    if user_name == 'null':
+        user_id = login.id
+    else:
+        user_id = db.User.query.filter_by(username=user_name).first().id
+    if login.id != user_id and private:
+        abort(404)
+    data = map(lambda x: (x.id, x.owner_id),
+               db.Tattoo.query.filter_by(owner_id=user_id, private=private).limit(limit).all())
+    data = {i: [*tid]
             for i, tid in enumerate(data)}
-    # print("HERE")
-    # print(data)
     return jsonify(data=data)
 
 
@@ -225,24 +239,34 @@ def tattoo():
     # user_id = login.id
     # if tattoo.private and tattoo.user_id != user_id:
     #     abort(404)
-    return send_file('../data/'+tattoo.path, mimetype='image/png')
+    print(tattoo.path)
+    return send_file('../data/'+tattoo.path)
 
 
 @app.route('/tattoo-data')
 def tattoo_data():
     tid = request.args.get('id')
+    token = request.args.get('token')
+    user = db.Login.query.filter_by(token=token).first()
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
-    print(tattoo.jsonify_other().data)
+    print(token)
+    # print(user.id)
+    # print(tattoo.owner_id)
+    if user is not None and user.id == tattoo.owner_id:
+        return tattoo.jsonify()
     return tattoo.jsonify_other()
 
 
 @app.route('/tattoo-update', methods=['POST'])
 def tattoo_update():
     data = json.loads(request.get_data(as_text=True))
+    print(data)
     tid = data['id']
     private = data['private']
+    tags = data['tags']
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
     tattoo.private = private
+    # tattoo.tags = tags
     token = data['token']
     login = db.Login.query.filter_by(token=token).first()
     if login is None:
@@ -250,8 +274,19 @@ def tattoo_update():
     user_id = login.id
     if tattoo.owner_id != user_id or private is None:
         abort(401)
+    db.HasTag.query.filter_by(tattoo_id=tid).delete()
     db.db.session.commit()
-    return redirect(url_for('index'))
+    with db.db.session.no_autoflush:
+        for tag in tags:
+            t = db.Tag.query.filter_by(desc=tag).first()
+            if t is None:
+                t = db.Tag(tag)
+                db.db.session.add(t)
+                db.db.session.commit()
+            ht = db.HasTag(tattoo.id, t.id, tattoo.owner_id)
+        db.db.session.add(ht)
+        db.db.session.commit()
+    return jsonify()
 
 
 @app.route('/tattoo-upload', methods=['POST'])
@@ -266,14 +301,16 @@ def tattoo_upload():
     login = db.Login.query.filter_by(token=token).first()
     if login is None:
         abort(404)
-    tattoo = db.Tattoo(login.id, private, image, name)
+    tattoo = db.Tattoo(login.id, private, image)
     import base64
     image = base64.b64decode(str.encode(image))
     print(image)
-    with open('data/'+name, 'wb') as f:
-        f.write(image)
     db.db.session.add(tattoo)
+    db.db.session.flush()
+    tattoo.path = tattoo.id
     db.db.session.commit()
+    with open('data/'+tattoo.path, 'wb') as f:
+        f.write(image)
     return tattoo.jsonify()
 
 
@@ -292,3 +329,25 @@ def tattoo_delete():
     tattoo.delete()
     db.db.session.commit()
     return 200
+
+
+@app.route('/search')
+def search():
+    by = request.args.get('by')
+    what = request.args.get('what')
+    limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
+    if by == 'tag':
+        print(what)
+        data = {i: [x.tattoo_id, x.owner_id]
+                for i, x in
+                enumerate(db.HasTag.query.filter_by(tag_id=what).limit(limit).all())}
+        print(data)
+        return jsonify(data=data)
+    elif by == 'user':
+        data = {i: [x.tattoo_id, x.owner_id]
+                for i, x in
+                db.Tattoo.query.filter(db.User.username.like('%{}%'.format(what))).limit(limit).all()}
+        print(data)
+        return jsonify(data=data)
+    else:
+        return jsonify(data='')

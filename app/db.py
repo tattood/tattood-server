@@ -32,25 +32,30 @@ class Tattoo(db.Model):
     path = db.Column(TINYTEXT)
     uploaded = db.Column(db.DateTime, default=db.func.current_timestamp())
 
-    def __init__(self, owner_id, private, data, path):
+    def __init__(self, owner_id, private, data):
         self.owner_id = owner_id
         self.private = private
         # [TODO] Should call tag extraction
-        self.tags = []
+        self.tags = ''
         # [TODO] Save data and put path
-        self.path = path
+        self.path = ''
 
     def __repr__(self):
         return "<Tatoo {} {}>".format(self.owner_id, self.id)
 
+    def get_tags(self):
+        return map(lambda x: Tag.query.filter_by(id=x).first().desc,
+            map(lambda x: x.tag_id,
+                db.HasTag.query(tattoo_id=id).all()))
+
     def jsonify(self):
         owner = User.query.filter_by(id=self.owner_id).first()
         return jsonify(owner_id=self.owner_id, owner=owner.username,
-                       id=self.id, private=self.private, tags=[self.tags])
+                       id=self.id, private=self.private, tags=self.get_tags())
 
     def jsonify_other(self):
         owner = User.query.filter_by(id=self.owner_id).first()
-        return jsonify(owner=owner.username, id=self.id, tags=[self.tags])
+        return jsonify(owner=owner.username, id=self.id, tags=self.get_tags())
 
 
 class Follows(db.Model):
@@ -107,3 +112,17 @@ class Login(db.Model):
 
     def jsonify(self):
         return jsonify(id=self.id, token=self.token)
+
+
+class HasTag(db.Model):
+    tattoo_id = db.Column(db.Integer, primary_key=True)
+    tag_id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer)
+
+    def __init__(self, tat_id, tag_id, o_id):
+        self.tattoo_id = tat_id
+        self.tag_id = tag_id
+        self.owner_id = o_id
+
+    def jsonify(self):
+        return jsonify(tattoo_id=self.tattoo_id, tag_id=self.tag_id, owner_id=self.o_id)
