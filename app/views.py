@@ -230,13 +230,10 @@ def tattoo():
     tid = request.args.get('id')
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
     token = request.args.get('token')
-    # login = db.Login.query.filter_by(token=token).first()
-    # print("TOKEN:"+token)
-    # if login is None:
-    #     abort(404)
-    # user_id = login.id
-    # if tattoo.private and tattoo.user_id != user_id:
-    #     abort(404)
+    login = db.Login.query.filter_by(token=token).first()
+    print("TOKEN:"+token)
+    if login is None:
+        abort(404)
     return send_file('../data/'+str(tattoo.id))
 
 
@@ -246,7 +243,6 @@ def tattoo_data():
     token = request.args.get('token')
     user = db.Login.query.filter_by(token=token).first()
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
-    # print(token)
     if user is not None and user.id == tattoo.owner_id:
         return tattoo.jsonify()
     return tattoo.jsonify_other()
