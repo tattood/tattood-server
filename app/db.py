@@ -37,6 +37,9 @@ class Tattoo(db.Model):
     def __repr__(self):
         return "<Tatoo {} {}>".format(self.owner_id, self.id)
 
+    def get_like_count(self):
+        return Likes.query.filter_by(tattoo_id=self.id).count()
+
     def get_tags(self):
         return list(map(lambda x: Tag.query.filter_by(id=x).first().desc,
                         map(lambda x: x.tag_id,
@@ -44,13 +47,13 @@ class Tattoo(db.Model):
 
     def jsonify(self):
         owner = User.query.filter_by(id=self.owner_id).first()
-        print(self.get_tags())
-        return jsonify(owner_id=self.owner_id, owner=owner.username,
-                       id=self.id, private=self.private, tags=self.get_tags())
+        return jsonify(owner_id=self.owner_id, owner=owner.username, id=self.id,
+                       private=self.private, tags=self.get_tags(), like_count=self.get_like_count())
 
     def jsonify_other(self):
         owner = User.query.filter_by(id=self.owner_id).first()
-        return jsonify(owner=owner.username, id=self.id, tags=self.get_tags())
+        return jsonify(owner=owner.username, owner_id=self.owner_id, id=self.id,
+                       tags=self.get_tags(), like_count=self.get_like_count())
 
 
 class Follows(db.Model):
@@ -84,7 +87,7 @@ class Likes(db.Model):
 
 
 class Tag(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     desc = db.Column(db.String(20))
 
     def __init__(self, desc):
