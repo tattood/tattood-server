@@ -1,10 +1,20 @@
 # import flask
 from app import app
 from app import db
+from app import crop
 from flask import render_template, redirect, url_for, request, session, abort, jsonify, send_file
 from sqlalchemy import func, desc
 import json
 import urllib.request
+import werkzeug.exceptions as ex
+
+
+class UnregisteredUser(ex.HTTPException):
+    code = 464
+    description = '<p>Unregistered User!</p>'
+
+
+# abort.mappings[464] = UnregisteredUser
 
 
 @app.route('/')
@@ -27,9 +37,10 @@ def parse_token(token):
 
 
 def verify(token, email):
-    data = parse_token(token)
-    if not data['email_verified'] or email != data['email']:
-        abort(404)
+    return True
+    # data = parse_token(token)
+    # if not data['email_verified'] or email != data['email']:
+    #     abort(404)
 
 
 @app.route('/login', methods=['POST'])
@@ -39,7 +50,8 @@ def login():
     token = data['token']
     user = db.User.query.filter_by(email=email).first()
     if user is None:
-        abort(464)
+        # abort(464)
+        raise UnregisteredUser
     login = db.Login.query.filter_by(id=user.id).first()
     if login is None:
         verify(token, email)
@@ -57,9 +69,10 @@ def user():
     username = data['username']
     email = data['email']
     token = data['token']
+    photo = data['photo']
     data = parse_token(token)
     verify(data, email)
-    user = db.User(username, email)
+    user = db.User(username, email, photo)
     try:
         db.db.session.add(user)
         db.db.session.commit()
@@ -218,7 +231,7 @@ def tattoo():
     print("TOKEN:"+token)
     if login is None:
         abort(404)
-    return send_file('../data/'+str(tattoo.id))
+    return send_file('../data/'+str(tattoo.id)+'.png')
 
 
 @app.route('/tattoo-data')
@@ -290,7 +303,8 @@ def tattoo_upload():
     image = base64.b64decode(str.encode(image))
     db.db.session.add(tattoo)
     db.db.session.commit()
-    with open('data/'+str(tattoo.id), 'wb') as f:
+    path = 'data/'+str(tattoo.id) + '.png'
+    with open(path, 'wb') as f:
         f.write(image)
     tag_c = 0 if data['tag_count'] is None else int(data['tag_count'])
     for i in range(tag_c):
@@ -303,6 +317,12 @@ def tattoo_upload():
         tag = db.HasTag(tattoo.id, tag.id, tattoo.owner_id)
         db.db.session.add(tag)
         db.db.session.commit()
+    x = data['x']
+    y = data['y']
+    points = [(px, py) for px, py in zip(x, y) for px, py in zip(px, py)]
+    print(points)
+    crop.crop(path, points)
+    # print(crop.tags())
     return tattoo.jsonify()
 
 

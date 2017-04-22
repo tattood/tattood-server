@@ -12,16 +12,18 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True)
     email = db.Column(db.String(100), unique=True)
+    photo = db.Column(db.String(400))
 
-    def __init__(self, username, email):
+    def __init__(self, username, email, photo):
         self.username = username
         self.email = email
+        self.photo = photo
 
     def __repr__(self):
         return "<User {} {}>".format(self.username, self.email)
 
     def jsonify(self):
-        return jsonify(username=self.username, email=self.email)
+        return jsonify(username=self.username, email=self.email, photo=self.photo)
 
 
 class Tattoo(db.Model):
