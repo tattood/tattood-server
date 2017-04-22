@@ -30,7 +30,6 @@ class NodeLookup(object):
             uid = parsed_items[0]
             human_string = parsed_items[2]
             uid_to_human[uid] = human_string
-        # Loads mapping from string UID to integer node ID.
         node_id_to_uid = {}
         proto_as_ascii = tf.gfile.GFile(label_lookup_path).readlines()
         for line in proto_as_ascii:
@@ -52,9 +51,6 @@ class NodeLookup(object):
         return self.node_lookup[node_id]
 
 
-node_lookup = NodeLookup()
-
-
 def create_graph():
     with tf.gfile.FastGFile(os.path.join('models', 'classify_image_graph_def.pb'), 'rb') as f:
         graph_def = tf.GraphDef()
@@ -63,11 +59,8 @@ def create_graph():
 
 
 def classify(image, *, N=5, threshold=0.5):
-    if not tf.gfile.Exists(image):
-        tf.logging.fatal('File does not exist %s', image)
     image = Image.open(image)
     image_data = np.array(image)[:, :, 0:3]  # Select RGB channels only.
-    create_graph()
     with tf.Session() as sess:
         softmax_tensor = sess.graph.get_tensor_by_name('softmax:0')
         predictions = sess.run(softmax_tensor, {'DecodeJpeg:0': image_data})
@@ -77,3 +70,7 @@ def classify(image, *, N=5, threshold=0.5):
             print("{}:{}".format(node_lookup.id_to_string(node), predictions[node]))
         top_k = filter(lambda x: predictions[x] >= threshold, top_k)
         return [node_lookup.id_to_string(node_id) for node_id in top_k]
+
+
+node_lookup = NodeLookup()
+create_graph()
