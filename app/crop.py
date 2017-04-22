@@ -1,8 +1,5 @@
 import cv2
-import json
 import numpy as np
-import sys
-import subprocess
 
 
 def crop(path, points):
@@ -13,27 +10,29 @@ def crop(path, points):
     ignore_mask_color = (255,)*channel_count
     cv2.fillPoly(mask, roi_corners, ignore_mask_color)
     masked_image = cv2.bitwise_and(image, mask)
-    cv2.imwrite(path, masked_image)
+    cv2.imwrite(path, masked_image, params=[cv2.IMWRITE_PNG_COMPRESSION])
 
 
-def tags():
-    THRESHOLD = 0.2
-    tags = np.array([])
-    try:
-        subprocess.check_output(["python",
-                                 "./models-master/tutorials/image/imagenet/classify_image.py",
-                                 "--image_file", "image_masked.png"])
-    except subprocess.CalledProcessError as e:
-        splittedOutput = e.output.split("|")
-        for asd in splittedOutput:
-            tags = np.append(tags, asd)
-        finalTags = np.array([])
-    for i in range(1, len(tags)):
-        if i % 2 == 1 and float(tags[i]) > THRESHOLD:
-            if "," in tags[i-1]:
-                splitted = tags[i-1].split(",")
-                for str in splitted:
-                    finalTags = np.append(finalTags, str.strip())
-            else:
-                finalTags = np.append(finalTags, tags[i-1].strip())
-    return finalTags
+# def tags(path):
+#     THRESHOLD = 0.2
+#     # tags = np.array([])
+#     try:
+#         out = subprocess.check_output(["python",
+#                                        "./models-master/tutorials/image/imagenet/classify_image.py",
+#                                        "--image_file", path])
+#         print(out)
+#         tags = np.array(out.split('|'))
+#         print(tags)
+#         finalTags = np.array([])
+#         for i in range(1, len(tags)):
+#             if i % 2 == 1 and float(tags[i]) > THRESHOLD:
+#                 if "," in tags[i-1]:
+#                     splitted = tags[i-1].split(",")
+#                     for str in splitted:
+#                         finalTags = np.append(finalTags, str.strip())
+#             else:
+#                 finalTags = np.append(finalTags, tags[i-1].strip())
+#         return finalTags
+#     except subprocess.CalledProcessError as e:
+#         print(e)
+#     return []

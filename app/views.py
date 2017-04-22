@@ -2,12 +2,14 @@
 from app import app
 from app import db
 from app import crop
+from app import classify_image
 from flask import render_template, redirect, url_for, request, session, abort, jsonify, send_file
 from sqlalchemy import func, desc
 import json
 import urllib.request
 import werkzeug.exceptions as ex
-
+import base64
+from tempfile import NamedTemporaryFile
 
 class UnregisteredUser(ex.HTTPException):
     code = 464
@@ -30,7 +32,6 @@ def users():
 
 
 def parse_token(token):
-    print(token)
     auth = 'https://www.googleapis.com/oauth2/v3/tokeninfo?id_token='
     data = urllib.request.urlopen(auth+token).read().decode('utf-8')
     return json.loads(data)
@@ -129,7 +130,6 @@ def liked():
     login = db.Login.query.filter_by(token=token).first()
     if login is None:
         abort(404)
-    print(user_name)
     if user_name == 'null':
         user_id = login.id
     else:
@@ -147,14 +147,9 @@ def user_tattoo():
     token = request.args.get('token')
     user_name = request.args.get('user')
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
-    # print("HERE-TOKEN")
-    # print(token)
-    # user_id = 12
-    print(user_name)
     login = db.Login.query.filter_by(token=token).first()
     if login is None:
         abort(404)
-    print(login)
     if user_name == 'null':
         user_id = login.id
     else:
@@ -182,7 +177,6 @@ def like():
         db.db.session.add(like)
         db.db.session.commit()
     except Exception as e:
-        print(e)
         abort(400)
     return jsonify()
 
@@ -228,7 +222,6 @@ def tattoo():
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
     token = request.args.get('token')
     login = db.Login.query.filter_by(token=token).first()
-    print("TOKEN:"+token)
     if login is None:
         abort(404)
     return send_file('../data/'+str(tattoo.id)+'.png')
@@ -240,8 +233,6 @@ def tattoo_data():
     token = request.args.get('token')
     user = db.Login.query.filter_by(token=token).first()
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
-    print(tid)
-    print(tattoo)
     if user is not None and user.id == tattoo.owner_id:
         data = tattoo.jsonify()
     else:
@@ -250,14 +241,12 @@ def tattoo_data():
     data = json.loads(data.get_data().decode())
     like = db.Likes.query.filter_by(tattoo_id=tid, user_id=user.id).first()
     data['is_liked'] = 0 if like is None else 1
-    print(data)
     return jsonify(**data)
 
 
 @app.route('/tattoo-update', methods=['POST'])
 def tattoo_update():
     data = json.loads(request.get_data(as_text=True))
-    print(data)
     tid = data['id']
     private = data['private']
     tags = data['tags']
@@ -276,7 +265,6 @@ def tattoo_update():
     with db.db.session.no_autoflush:
         for tag in tags:
             t = db.Tag.query.filter_by(desc=tag).first()
-            print(tag)
             if t is None:
                 t = db.Tag(tag)
                 db.db.session.add(t)
@@ -284,6 +272,27 @@ def tattoo_update():
             ht = db.HasTag(tattoo.id, t.id, tattoo.owner_id)
             db.db.session.add(ht)
         db.db.session.commit()
+    return jsonify()
+
+
+@app.route('/extract-tags', methods=['POST'])
+def extract_tags():
+    data = json.loads(request.get_data(as_text=True))
+    token = data['token']
+    image = data['image']
+    login = db.Login.query.filter_by(token=token).first()
+    if login is None:
+        abort(404)
+    x = data['x']
+    y = data['y']
+    points = [(px, py) for px, py in zip(x, y) for px, py in zip(px, py)]
+    image = base64.b64decode(str.encode(image))
+    with NamedTemporaryFile(suffix='.png') as f:
+        f.write(image)
+        if len(points) > 0:
+            crop.crop(f.name, points)
+        tags = [tag.split(',')[0] for tag in classify_image.classify(f.name)]
+        return jsonify(data=tags)
     return jsonify()
 
 
@@ -317,12 +326,6 @@ def tattoo_upload():
         tag = db.HasTag(tattoo.id, tag.id, tattoo.owner_id)
         db.db.session.add(tag)
         db.db.session.commit()
-    x = data['x']
-    y = data['y']
-    points = [(px, py) for px, py in zip(x, y) for px, py in zip(px, py)]
-    print(points)
-    crop.crop(path, points)
-    # print(crop.tags())
     return tattoo.jsonify()
 
 
@@ -347,7 +350,6 @@ def tattoo_delete():
 def search():
     query = request.args.get('query')
     limit = request.args.get('limit')
-    print(query)
     tags = {i: [x.tattoo_id, x.owner_id] for i, x in
             enumerate(db.HasTag.query.filter_by(tag_id=query).limit(limit).all())}
     users = {i: [x.id, x.owner_id] for i, x in
