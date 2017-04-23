@@ -222,6 +222,8 @@ def tattoo():
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
     token = request.args.get('token')
     login = db.Login.query.filter_by(token=token).first()
+    print(token)
+    print(login)
     if login is None:
         abort(404)
     return send_file('../data/'+str(tattoo.id)+'.png')
@@ -315,12 +317,10 @@ def tattoo_upload():
     path = 'data/'+str(tattoo.id) + '.png'
     with open(path, 'wb') as f:
         f.write(image)
-    tag_c = 0 if data['tag_count'] is None else int(data['tag_count'])
-    for i in range(tag_c):
-        desc = data['tag{}'.format(i)]
-        tag = db.Tag.query.filter_by(desc=desc).first()
+    for tag_desc in data['tags']:
+        tag = db.Tag.query.filter_by(desc=tag_desc).first()
         if tag is None:
-            tag = db.Tag(desc)
+            tag = db.Tag(tag_desc)
             db.db.session.add(tag)
             db.db.session.commit()
         tag = db.HasTag(tattoo.id, tag.id, tattoo.owner_id)
@@ -350,9 +350,14 @@ def tattoo_delete():
 def search():
     query = request.args.get('query')
     limit = request.args.get('limit')
-    tags = {i: [x.tattoo_id, x.owner_id] for i, x in
-            enumerate(db.HasTag.query.filter_by(tag_id=query).limit(limit).all())}
+    tag_id = db.Tag.query.filter_by(desc=query).first()
+    tags = {}
+    if tag_id is not None:
+        tags = {i: [x.tattoo_id, x.owner_id] for i, x in
+                enumerate(db.HasTag.query.filter_by(tag_id=tag_id.id).limit(limit).all())}
     users = {i: [x.id, x.owner_id] for i, x in
              enumerate(db.Tattoo.query.filter(db.User.username.like('%{}%'.format(query))).
                        limit(limit).all())}
+    print(tags)
+    print(users)
     return jsonify(tags={'data': tags}, users={'data': users})
