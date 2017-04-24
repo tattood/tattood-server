@@ -226,7 +226,8 @@ def tattoo():
     print(login)
     if login is None:
         abort(404)
-    return send_file('../data/'+str(tattoo.id)+'.png')
+    path = '../data/'+str(tattoo.id)+'.png'
+    return send_file(path)
 
 
 @app.route('/tattoo-data')
@@ -242,7 +243,7 @@ def tattoo_data():
     import json
     data = json.loads(data.get_data().decode())
     like = db.Likes.query.filter_by(tattoo_id=tid, user_id=user.id).first()
-    data['is_liked'] = 0 if like is None else 1
+    data['is_liked'] = False if like is None else True
     return jsonify(**data)
 
 
@@ -310,7 +311,6 @@ def tattoo_upload():
     if login is None:
         abort(404)
     tattoo = db.Tattoo(login.id, private, image)
-    import base64
     image = base64.b64decode(str.encode(image))
     db.db.session.add(tattoo)
     db.db.session.commit()

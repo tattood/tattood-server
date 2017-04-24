@@ -58,9 +58,11 @@ def create_graph():
         _ = tf.import_graph_def(graph_def, name='')
 
 
-def classify(image, *, N=5, threshold=0.5):
+def classify(image, *, N=5, threshold=0.1):
     image = Image.open(image)
     image_data = np.array(image)[:, :, 0:3]  # Select RGB channels only.
+    node_lookup = NodeLookup()
+    create_graph()
     with tf.Session() as sess:
         softmax_tensor = sess.graph.get_tensor_by_name('softmax:0')
         predictions = sess.run(softmax_tensor, {'DecodeJpeg:0': image_data})
@@ -70,7 +72,3 @@ def classify(image, *, N=5, threshold=0.5):
             print("{}:{}".format(node_lookup.id_to_string(node), predictions[node]))
         top_k = filter(lambda x: predictions[x] >= threshold, top_k)
         return [node_lookup.id_to_string(node_id) for node_id in top_k]
-
-
-node_lookup = NodeLookup()
-create_graph()

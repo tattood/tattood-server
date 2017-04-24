@@ -49,12 +49,12 @@ class Tattoo(db.Model):
 
     def jsonify(self):
         owner = User.query.filter_by(id=self.owner_id).first()
-        return jsonify(owner_id=self.owner_id, owner=owner.username, id=self.id,
+        return jsonify(owner_id=self.owner_id, owner=owner.username, id=self.id, url=owner.photo,
                        private=self.private, tags=self.get_tags(), like_count=self.get_like_count())
 
     def jsonify_other(self):
         owner = User.query.filter_by(id=self.owner_id).first()
-        return jsonify(owner=owner.username, owner_id=self.owner_id, id=self.id,
+        return jsonify(owner=owner.username, owner_id=self.owner_id, id=self.id, url=owner.photo,
                        tags=self.get_tags(), like_count=self.get_like_count())
 
 
