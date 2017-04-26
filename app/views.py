@@ -311,14 +311,15 @@ def tattoo_upload():
     if login is None:
         abort(404)
     tattoo = db.Tattoo(login.id, private, image)
-    image = base64.b64decode(str.encode(image))
     db.db.session.add(tattoo)
     db.db.session.commit()
     path = 'data/'+str(tattoo.id) + '.png'
     with open(path, 'wb') as f:
+        image = base64.b64decode(str.encode(image))
         f.write(image)
     for tag_desc in data['tags']:
         tag = db.Tag.query.filter_by(desc=tag_desc).first()
+        print(tag_desc)
         if tag is None:
             tag = db.Tag(tag_desc)
             db.db.session.add(tag)
@@ -333,7 +334,7 @@ def tattoo_upload():
 def tattoo_delete():
     data = json.loads(request.get_data(as_text=True))
     token = data['token']
-    tid = data['id']
+    tid = data['email']
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
     login = db.Login.query.filter_by(token=token).first()
     if login is None:
@@ -341,9 +342,10 @@ def tattoo_delete():
     user_id = login.id
     if tattoo.owner_id != user_id:
         abort(401)
-    tattoo.delete()
+    db.HasTag.query.filter_by(tattoo_id=tid).delete()
+    db.db.session.delete(tattoo)
     db.db.session.commit()
-    return 200
+    return jsonify()
 
 
 @app.route('/search')
