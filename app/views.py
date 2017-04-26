@@ -4,7 +4,7 @@ from app import db
 from app import crop
 from app import classify_image
 from flask import render_template, redirect, url_for, request, session, abort, jsonify, send_file
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, and_, true
 import json
 import urllib.request
 import werkzeug.exceptions as ex
@@ -352,14 +352,17 @@ def tattoo_delete():
 def search():
     query = request.args.get('query')
     limit = request.args.get('limit')
-    tag_id = db.Tag.query.filter_by(desc=query).first()
-    tags = {}
-    if tag_id is not None:
-        tags = {i: [x.tattoo_id, x.owner_id] for i, x in
-                enumerate(db.HasTag.query.filter_by(tag_id=tag_id.id).limit(limit).all())}
-    users = {i: [x.id, x.owner_id] for i, x in
-             enumerate(db.Tattoo.query.filter(db.User.username.like('%{}%'.format(query))).
+    tag = db.Tag.query.filter_by(desc=query).first()
+    latest = request.args.get('latest')
+    latest = true if latest is None else db.Tattoo.id < latest
+    tags = {i: [x.tattoo_id, x.owner_id] for i, x in
+            enumerate(db.HasTag.query
+                      .filter_by(tag_id=tag.id)
+                      .join(db.Tattoo)
+                      .filter(latest)
+                      .order_by(desc(db.Tattoo.id))
+                      .limit(limit).all())} if tag is not None else {}
+    users = {i: [x.username, x.photo] for i, x in
+             enumerate(db.User.query.filter(db.User.username.like('%{}%'.format(query))).
                        limit(limit).all())}
-    print(tags)
-    print(users)
     return jsonify(tags={'data': tags}, users={'data': users})

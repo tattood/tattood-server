@@ -2,6 +2,7 @@ import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
 from app import app
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.mysql import TINYTEXT, TEXT
 
 
@@ -31,7 +32,6 @@ class Tattoo(db.Model):
     owner_id = db.Column(db.Integer, primary_key=True)
     private = db.Column(db.Integer)
     uploaded = db.Column(db.DateTime, default=db.func.current_timestamp())
-
     def __init__(self, owner_id, private, data):
         self.owner_id = owner_id
         self.private = private
@@ -115,9 +115,9 @@ class Login(db.Model):
 
 
 class HasTag(db.Model):
-    tattoo_id = db.Column(db.Integer, primary_key=True)
-    tag_id = db.Column(db.Integer, primary_key=True)
-    owner_id = db.Column(db.Integer)
+    tattoo_id = db.Column(db.Integer, db.ForeignKey('tattoo.id'), primary_key=True)
+    tag_id = db.Column(db.Integer, db.ForeignKey('tag.id'), primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __init__(self, tat_id, tag_id, o_id):
         self.tattoo_id = tat_id
