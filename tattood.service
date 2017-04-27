@@ -5,9 +5,9 @@ After=network.target
 [Service]
 User=eksi
 Group=nginx
-WorkingDirectory=/home/eksi/tattood/
-Environment="PATH=/home/eksi/tattood/venv/bin"
-ExecStart=/home/eksi/venv/bin/uwsgi --ini tattood.ini
+WorkingDirectory=/home/www-data/tattood/
+Environment="PATH=/home/www-data/tattood/venv/bin"
+ExecStart=/home/www-data/venv/bin/uwsgi --ini tattood.ini
 
 [Install]
 WantedBy=multi-user.target
