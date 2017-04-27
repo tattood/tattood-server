@@ -3,11 +3,11 @@ Description=uWSGI instance to serve tattood
 After=network.target
 
 [Service]
-User=
+User=root
 Group=nginx
-WorkingDirectory=/home/user/myproject
+WorkingDirectory=/root/tattood/
 Environment="PATH=/root/tattood/venv/bin"
-ExecStart=/root/tattood/env/bin/uwsgi --ini tattood.ini
+ExecStart=/root/tattood/venv/bin/uwsgi --ini tattood.ini
 
 [Install]
 WantedBy=multi-user.target
