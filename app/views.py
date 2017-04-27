@@ -354,7 +354,7 @@ def search():
     limit = request.args.get('limit')
     tag = db.Tag.query.filter_by(desc=query).first()
     latest = request.args.get('latest')
-    latest = true if latest is None else db.Tattoo.id < latest
+    latest = true() if latest is None else db.Tattoo.id < latest
     tags = {i: [x.tattoo_id, x.owner_id] for i, x in
             enumerate(db.HasTag.query
                       .filter_by(tag_id=tag.id)
