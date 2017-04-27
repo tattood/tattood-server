@@ -1,4 +1,8 @@
-#!venv/bin/python
+from flask import Flask
+application = Flask(__name__)
+
 if __name__ == "__main__":
-    from app import app
-    app.run(host='0.0.0.0', debug=True)
+    application.config.from_object('config')
+    application.run(host='0.0.0.0')
+
+from app import views
