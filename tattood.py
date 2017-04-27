@@ -1,8 +1,7 @@
-from flask import Flask
-application = Flask(__name__)
+from app import app
 
 if __name__ == "__main__":
-    application.config.from_object('config')
-    application.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)
+
 
 from app import views
