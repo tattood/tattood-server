@@ -1,5 +1,5 @@
 # import flask
-from app import app
+from app import application
 from app import db
 from app import crop
 from app import classify_image
@@ -19,13 +19,13 @@ class UnregisteredUser(ex.HTTPException):
 # abort.mappings[464] = UnregisteredUser
 
 
-@app.route('/')
-@app.route('/index')
+@application.route('/')
+@application.route('/index')
 def index():
     return redirect(url_for('users'))
 
 
-@app.route('/users/')
+@application.route('/users/')
 def users():
     # users = db.User.query.all()
     return render_template('sql_users.jinja2', users=[])
@@ -44,7 +44,7 @@ def verify(token, email):
     #     abort(404)
 
 
-@app.route('/login', methods=['POST'])
+@application.route('/login', methods=['POST'])
 def login():
     data = json.loads(request.get_data(as_text=True))
     email = data['email']
@@ -64,7 +64,7 @@ def login():
     return user.jsonify()
 
 
-@app.route('/register', methods=['POST'])
+@application.route('/register', methods=['POST'])
 def user():
     data = json.loads(request.get_data(as_text=True))
     username = data['username']
@@ -85,7 +85,7 @@ def user():
     return jsonify()
 
 
-@app.route('/logout', methods=['POST'])
+@application.route('/logout', methods=['POST'])
 def logout():
     data = json.loads(request.get_data(as_text=True))
     token = data['token']
@@ -98,7 +98,7 @@ def logout():
     return jsonify()
 
 
-@app.route('/popular')
+@application.route('/popular')
 def popular():
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     data = map(lambda x: x.tattoo_id,
@@ -109,7 +109,7 @@ def popular():
     return jsonify(data=data)
 
 
-@app.route('/recent')
+@application.route('/recent')
 def recent():
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     data = {i: [x.id, x.owner_id]
@@ -122,7 +122,7 @@ def recent():
     return jsonify(data=data)
 
 
-@app.route('/user-likes')
+@application.route('/user-likes')
 def liked():
     token = request.args.get('token')
     user_name = request.args.get('user')
@@ -141,7 +141,7 @@ def liked():
 
 
 # /user-tattoo?private=1
-@app.route('/user-tattoo')
+@application.route('/user-tattoo')
 def user_tattoo():
     private = request.args.get('private') or '0'
     token = request.args.get('token')
@@ -163,7 +163,7 @@ def user_tattoo():
     return jsonify(data=data)
 
 
-@app.route('/like', methods=['POST'])
+@application.route('/like', methods=['POST'])
 def like():
     data = json.loads(request.get_data(as_text=True))
     tid = data['email']
@@ -181,7 +181,7 @@ def like():
     return jsonify()
 
 
-@app.route('/unlike', methods=['POST'])
+@application.route('/unlike', methods=['POST'])
 def unlike():
     data = json.loads(request.get_data(as_text=True))
     tid = data['email']
@@ -194,7 +194,7 @@ def unlike():
     return jsonify()
 
 
-# @app.route('/following')
+# @application.route('/following')
 # def followed():
 #     token = request.args.get('token')
 #     searched = request.args.get('searched')
@@ -205,7 +205,7 @@ def unlike():
 #     return jsonify(likes=likes)
 
 
-# @app.route('/follower')
+# @application.route('/follower')
 # def follower():
 #     token = request.args.get('token')
 #     searched = request.args.get('searched')
@@ -216,7 +216,7 @@ def unlike():
 #     return jsonify(likes=likes)
 
 
-@app.route('/tattoo')
+@application.route('/tattoo')
 def tattoo():
     tid = request.args.get('id')
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
@@ -230,7 +230,7 @@ def tattoo():
     return send_file(path)
 
 
-@app.route('/tattoo-data')
+@application.route('/tattoo-data')
 def tattoo_data():
     tid = request.args.get('id')
     token = request.args.get('token')
@@ -247,7 +247,7 @@ def tattoo_data():
     return jsonify(**data)
 
 
-@app.route('/tattoo-update', methods=['POST'])
+@application.route('/tattoo-update', methods=['POST'])
 def tattoo_update():
     data = json.loads(request.get_data(as_text=True))
     tid = data['id']
@@ -278,7 +278,7 @@ def tattoo_update():
     return jsonify()
 
 
-@app.route('/extract-tags', methods=['POST'])
+@application.route('/extract-tags', methods=['POST'])
 def extract_tags():
     data = json.loads(request.get_data(as_text=True))
     token = data['token']
@@ -299,7 +299,7 @@ def extract_tags():
     return jsonify()
 
 
-@app.route('/tattoo-upload', methods=['POST'])
+@application.route('/tattoo-upload', methods=['POST'])
 def tattoo_upload():
     data = json.loads(request.get_data(as_text=True))
     token = data['token']
@@ -330,7 +330,7 @@ def tattoo_upload():
     return tattoo.jsonify()
 
 
-@app.route('/tattoo-delete', methods=['POST'])
+@application.route('/tattoo-delete', methods=['POST'])
 def tattoo_delete():
     data = json.loads(request.get_data(as_text=True))
     token = data['token']
@@ -348,7 +348,7 @@ def tattoo_delete():
     return jsonify()
 
 
-@app.route('/search')
+@application.route('/search')
 def search():
     query = request.args.get('query')
     limit = request.args.get('limit')

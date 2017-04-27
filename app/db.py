@@ -1,12 +1,12 @@
 import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask import jsonify
-from app import app
+from app import application
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.mysql import TINYTEXT, TEXT
 
 
-db = SQLAlchemy(app)
+db = SQLAlchemy(application)
 
 
 class User(db.Model):
