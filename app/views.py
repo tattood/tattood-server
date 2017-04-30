@@ -132,17 +132,14 @@ def liked():
     user_name = request.args.get('user')
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     login = db.Login.query.filter_by(token=token).first()
-    print(login)
     if login is None:
         abort(404)
     if user_name == 'null':
         user_id = login.id
     else:
         user_id = db.User.query.filter_by(username=user_name).first().id
-    print(user_name)
-    print(user_id)
-    data = db.Likes.query.filter_by(user_id=user_id).limit(limit).all()
-    data = {i: [l.tattoo_id, db.Tattoo.query.filter_by(id=l.tattoo_id).first().owner_id]
+    data = db.Likes.query.filter_by(user_id=user_id).filter_by(private=False).limit(limit).all()
+    data = {i: [l.tattoo_id, l.owner_id]
             for i, l in enumerate(data)}
     print(data)
     return jsonify(data=data)
