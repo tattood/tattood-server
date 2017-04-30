@@ -128,15 +128,19 @@ def liked():
     user_name = request.args.get('user')
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     login = db.Login.query.filter_by(token=token).first()
+    print(login)
     if login is None:
         abort(404)
     if user_name == 'null':
         user_id = login.id
     else:
         user_id = db.User.query.filter_by(username=user_name).first().id
+    print(user_name)
+    print(user_id)
     data = db.Likes.query.filter_by(user_id=user_id).limit(limit).all()
     data = {i: [l.tattoo_id, db.Tattoo.query.filter_by(id=l.tattoo_id).first().owner_id]
             for i, l in enumerate(data)}
+    print(data)
     return jsonify(data=data)
 
 
@@ -154,7 +158,7 @@ def user_tattoo():
         user_id = login.id
     else:
         user_id = db.User.query.filter_by(username=user_name).first().id
-    if login.id != user_id and private:
+    if login.id != user_id and private == '1':
         abort(404)
     data = map(lambda x: (x.id, x.owner_id),
                db.Tattoo.query.filter_by(owner_id=user_id, private=private).limit(limit).all())
@@ -222,8 +226,6 @@ def tattoo():
     tattoo = db.Tattoo.query.filter_by(id=tid).first()
     token = request.args.get('token')
     login = db.Login.query.filter_by(token=token).first()
-    print(token)
-    print(login)
     if login is None:
         abort(404)
     path = '../data/'+str(tattoo.id)+'.png'
