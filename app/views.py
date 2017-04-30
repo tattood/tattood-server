@@ -324,6 +324,8 @@ def tattoo_upload():
         y = data['y']
         points = [(px, py) for px, py in zip(x, y) for px, py in zip(px, py)]
         image = base64.b64decode(str.encode(image))
+        f.write(image)
+        image = cv2.imread(f.name)
         if len(points) > 0:
             image = crop.crop(f.name, points)
         image = crop.make_transparent(image)

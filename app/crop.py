@@ -11,7 +11,6 @@ def crop(path, points):
     cv2.fillPoly(mask, roi_corners, ignore_mask_color)
     masked_image = cv2.bitwise_and(image, mask)
     return masked_image
-    cv2.imwrite(path, masked_image, params=[cv2.IMWRITE_PNG_COMPRESSION])
 
 
 def make_transparent(masked_image):
