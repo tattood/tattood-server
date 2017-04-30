@@ -9,6 +9,7 @@ import json
 import urllib.request
 import werkzeug.exceptions as ex
 import base64
+import cv2
 from tempfile import NamedTemporaryFile
 
 class UnregisteredUser(ex.HTTPException):
@@ -296,7 +297,8 @@ def extract_tags():
     with NamedTemporaryFile(suffix='.png') as f:
         f.write(image)
         if len(points) > 0:
-            crop.crop(f.name, points)
+            image = crop.crop(f.name, points)
+            cv2.imwrite(f.name, image, params=[cv2.IMWRITE_PNG_COMPRESSION])
         tags = [tag.split(',')[0] for tag in classify_image.classify(f.name)]
         return jsonify(data=tags)
     return jsonify()
@@ -318,8 +320,14 @@ def tattoo_upload():
     db.db.session.commit()
     path = 'data/'+str(tattoo.id) + '.png'
     with open(path, 'wb') as f:
+        x = data['x']
+        y = data['y']
+        points = [(px, py) for px, py in zip(x, y) for px, py in zip(px, py)]
         image = base64.b64decode(str.encode(image))
-        f.write(image)
+        if len(points) > 0:
+            image = crop.crop(f.name, points)
+        image = crop.make_transparent(image)
+        cv2.imwrite(f, image, params=[cv2.IMWRITE_PNG_COMPRESSION])
     for tag_desc in data['tags']:
         tag = db.Tag.query.filter_by(desc=tag_desc).first()
         print(tag_desc)
