@@ -329,7 +329,7 @@ def tattoo_upload():
         if len(points) > 0:
             image = crop.crop(f.name, points)
         image = crop.make_transparent(image)
-        cv2.imwrite(f, image, params=[cv2.IMWRITE_PNG_COMPRESSION])
+        cv2.imwrite(f.name, image, params=[cv2.IMWRITE_PNG_COMPRESSION])
     for tag_desc in data['tags']:
         tag = db.Tag.query.filter_by(desc=tag_desc).first()
         print(tag_desc)
@@ -380,3 +380,17 @@ def search():
              enumerate(db.User.query.filter(db.User.username.like('%{}%'.format(query))).
                        limit(limit).all())}
     return jsonify(tags={'data': tags}, users={'data': users})
+
+
+@application.errorhandler(500)
+def internal_error(exception):
+    application.logger.error(exception)
+    if application.debug is not True:
+        import logging
+        from logging.handlers import RotatingFileHandler
+        file_handler = RotatingFileHandler('python.log', maxBytes=1024 * 1024 * 100, backupCount=20)
+        file_handler.setLevel(logging.ERROR)
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        file_handler.setFormatter(formatter)
+        application.logger.addHandler(file_handler)
+    return abort(500)
