@@ -257,28 +257,25 @@ def tattoo_update():
     tid = data['id']
     private = data['private']
     tags = data['tags']
-    tattoo = db.Tattoo.query.filter_by(id=tid).first()
-    tattoo.private = private
-    # tattoo.tags = tags
     token = data['token']
     login = db.Login.query.filter_by(token=token).first()
+    tattoo = db.Tattoo.query.filter_by(id=tid).first()
     if login is None:
         abort(404)
-    user_id = login.id
-    if tattoo.owner_id != user_id or private is None:
+    if tattoo.owner_id != login.id or private is None:
         abort(401)
+    tattoo.private = private
     db.HasTag.query.filter_by(tattoo_id=tid).delete()
     db.db.session.commit()
-    with db.db.session.no_autoflush:
-        for tag in tags:
-            t = db.Tag.query.filter_by(desc=tag).first()
-            if t is None:
-                t = db.Tag(tag)
-                db.db.session.add(t)
-                db.db.session.commit()
-            ht = db.HasTag(tattoo.id, t.id, tattoo.owner_id)
-            db.db.session.add(ht)
+    for tag in tags:
+        t = db.Tag.query.filter_by(desc=tag).first()
+        if t is None:
+            t = db.Tag(tag)
+            db.db.session.add(t)
             db.db.session.commit()
+        ht = db.HasTag(tattoo.id, t.id, tattoo.owner_id)
+        db.db.session.add(ht)
+        db.db.session.commit()
     return jsonify()
 
 
