@@ -10,4 +10,12 @@ def crop(path, points):
     ignore_mask_color = (255,)*channel_count
     cv2.fillPoly(mask, roi_corners, ignore_mask_color)
     masked_image = cv2.bitwise_and(image, mask)
-    cv2.imwrite(path, masked_image, params=[cv2.IMWRITE_PNG_COMPRESSION])
+    b_channel, g_channel, r_channel = cv2.split(masked_image)
+    alpha_channel = np.full(b_channel.shape, 255, dtype=b_channel.dtype)
+    mat = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            m = mat[i, j]
+            if m[0] > 230 and m[1] > 230 and m[2] > 230:
+                mat[i, j] = [255, 255, 255, 0]
+    cv2.imwrite(path, mat, params=[cv2.IMWRITE_PNG_COMPRESSION])
