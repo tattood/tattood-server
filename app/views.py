@@ -102,7 +102,7 @@ def logout():
 def popular():
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     data = map(lambda x: x.tattoo_id,
-               db.db.session.query(db.Likes.tattoo_id, func.count(1))
+               db.db.session.query(db.Likes.tattoo_id, func.count(1)).filter_by(private=False)
                .group_by(db.Likes.tattoo_id).order_by(desc(func.count(1))).limit(limit).all())
     data = {i: [tid, db.Tattoo.query.filter_by(id=tid).first().owner_id]
             for i, tid in enumerate(data)}
@@ -361,6 +361,7 @@ def search():
             enumerate(db.HasTag.query
                       .filter_by(tag_id=tag.id)
                       .join(db.Tattoo)
+                      .filter_by(private=False)
                       .filter(latest)
                       .order_by(desc(db.Tattoo.id))
                       .limit(limit).all())} if tag is not None else {}
