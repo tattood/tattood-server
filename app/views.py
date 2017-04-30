@@ -278,7 +278,7 @@ def tattoo_update():
                 db.db.session.commit()
             ht = db.HasTag(tattoo.id, t.id, tattoo.owner_id)
             db.db.session.add(ht)
-        db.db.session.commit()
+            db.db.session.commit()
     return jsonify()
 
 
@@ -393,4 +393,4 @@ def internal_error(exception):
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         file_handler.setFormatter(formatter)
         application.logger.addHandler(file_handler)
-    return abort(500)
+    return 'Error Occurred', 500
