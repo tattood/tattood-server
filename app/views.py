@@ -102,8 +102,12 @@ def logout():
 def popular():
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
     data = map(lambda x: x.tattoo_id,
-               db.db.session.query(db.Likes.tattoo_id, func.count(1)).filter_by(private=False)
-               .group_by(db.Likes.tattoo_id).order_by(desc(func.count(1))).limit(limit).all())
+               db.db.session.query(db.Likes.tattoo_id, func.count(1))
+               .group_by(db.Likes.tattoo_id)
+               .order_by(desc(func.count(1)))
+               .join(db.Tattoo, db.Tattoo.id == db.Likes.tattoo_id)
+               .filter_by(private=False)
+               .limit(limit).all())
     data = {i: [tid, db.Tattoo.query.filter_by(id=tid).first().owner_id]
             for i, tid in enumerate(data)}
     return jsonify(data=data)
