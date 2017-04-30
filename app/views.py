@@ -139,7 +139,7 @@ def liked():
     else:
         user_id = db.User.query.filter_by(username=user_name).first().id
     data = db.Likes.query.filter_by(user_id=user_id).join(db.Tattoo, db.Tattoo.id == db.Likes.tattoo_id).filter_by(private=False).limit(limit).all()
-    data = {i: [l.tattoo_id, l.owner_id]
+    data = {i: [l.tattoo_id, db.Tattoo.query.filter_by(id=l.tattoo_id).first().owner_id]
             for i, l in enumerate(data)}
     print(data)
     return jsonify(data=data)
