@@ -3,7 +3,7 @@ from app import application
 from app import db
 from app import crop
 from app import classify_image
-from flask import render_template, redirect, url_for, request, session, abort, jsonify, send_file
+from flask import render_template, redirect, url_for, request, abort, jsonify, send_file
 from sqlalchemy import func, desc, and_, true
 import json
 import urllib.request
@@ -265,8 +265,10 @@ def tattoo_update():
     if tattoo.owner_id != login.id or private is None:
         abort(401)
     tattoo.private = private
-    db.HasTag.query.filter_by(tattoo_id=tid).delete()
-    db.db.session.commit()
+    print(tags)
+    for t in db.HasTag.query.filter_by(tattoo_id=tid).all():
+        db.db.session.delete(t)
+        db.db.session.commit()
     for tag in tags:
         t = db.Tag.query.filter_by(desc=tag).first()
         if t is None:
