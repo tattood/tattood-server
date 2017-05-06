@@ -9,8 +9,14 @@ def crop(path, points):
     channel_count = image.shape[2]
     ignore_mask_color = (255,)*channel_count
     cv2.fillPoly(mask, roi_corners, ignore_mask_color)
-    masked_image = cv2.bitwise_and(image, mask)
-    return masked_image
+    white = np.full(mask.shape, 255, dtype=mask.dtype)
+    result_white = white.copy()
+    if mask.shape[2] == 4:
+        a,b,c,d = cv2.split(mask)
+    else:
+        a, b, c = cv2.split(mask)
+    cv2.bitwise_and(white, image, result_white, a)
+    return result_white
 
 
 def make_transparent(masked_image):

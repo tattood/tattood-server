@@ -149,7 +149,7 @@ def liked():
 # /user-tattoo?private=1
 @application.route('/user-tattoo')
 def user_tattoo():
-    private = request.args.get('private') or '0'
+    private = True if request.args.get('private') == '1' else False
     token = request.args.get('token')
     user_name = request.args.get('user')
     limit = 20 if request.args.get('limit') is None else int(request.args.get('limit'))
@@ -160,7 +160,7 @@ def user_tattoo():
         user_id = login.id
     else:
         user_id = db.User.query.filter_by(username=user_name).first().id
-    if login.id != user_id and private == '1':
+    if login.id != user_id and private == True:
         abort(404)
     data = map(lambda x: (x.id, x.owner_id),
                db.Tattoo.query.filter_by(owner_id=user_id, private=private).limit(limit).all())
@@ -295,6 +295,7 @@ def extract_tags():
     image = base64.b64decode(str.encode(image))
     with NamedTemporaryFile(suffix='.png') as f:
         f.write(image)
+        f.flush()
         if len(points) > 0:
             image = crop.crop(f.name, points)
             cv2.imwrite(f.name, image, params=[cv2.IMWRITE_PNG_COMPRESSION])
@@ -327,7 +328,7 @@ def tattoo_upload():
         image = cv2.imread(f.name, cv2.IMREAD_UNCHANGED)
         if len(points) > 0:
             image = crop.crop(f.name, points)
-        image = crop.make_transparent(image)
+        # image = crop.make_transparent(image)
         cv2.imwrite(f.name, image, params=[cv2.IMWRITE_PNG_COMPRESSION])
     for tag_desc in data['tags']:
         tag = db.Tag.query.filter_by(desc=tag_desc).first()

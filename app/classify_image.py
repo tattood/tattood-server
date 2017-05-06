@@ -7,6 +7,7 @@ import re
 # import functools
 
 import numpy as np
+import cv2
 from PIL import Image
 import tensorflow as tf
 
@@ -51,18 +52,14 @@ class NodeLookup(object):
         return self.node_lookup[node_id]
 
 
-def create_graph():
-    with tf.gfile.FastGFile(os.path.join('models', 'classify_image_graph_def.pb'), 'rb') as f:
-        graph_def = tf.GraphDef()
-        graph_def.ParseFromString(f.read())
-        _ = tf.import_graph_def(graph_def, name='')
+graph_def = tf.GraphDef()
+with tf.gfile.FastGFile(os.path.join('models', 'classify_image_graph_def.pb'), 'rb') as f:
+    graph_def.ParseFromString(f.read())
+node_lookup = NodeLookup()
 
-
-def classify(image, *, N=5, threshold=0.1):
-    image = Image.open(image)
-    image_data = np.array(image)[:, :, 0:3]  # Select RGB channels only.
-    node_lookup = NodeLookup()
-    create_graph()
+def classify(path, *, N=5, threshold=0.1):
+    image_data = cv2.imread(path)
+    _ = tf.import_graph_def(graph_def, name='')
     with tf.Session() as sess:
         softmax_tensor = sess.graph.get_tensor_by_name('softmax:0')
         predictions = sess.run(softmax_tensor, {'DecodeJpeg:0': image_data})
